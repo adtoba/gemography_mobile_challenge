@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gemography_mobile_challenge/components/fragments/list_items/repo_item.dart';
+import 'package:gemography_mobile_challenge/components/fragments/loaders/loader.dart';
 import 'package:gemography_mobile_challenge/models/http/github_api_response.dart';
 import 'package:gemography_mobile_challenge/registry.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,47 +14,43 @@ class ReposPage extends StatefulHookWidget {
 }
 
 class _ReposPageState extends State<ReposPage> with AutomaticKeepAliveClientMixin {
+
+  // Scroll controller that can be used to check for the scroll extent of listview
   final _scrollController = ScrollController();
 
+  // Holds the currentPage for the api request
   int currentPageNumber = 1;
 
+  // Subtracts 30 days from current date as specified in the app idea
   DateTime date = DateTime.now().subtract(Duration(days: 30));
 
   @override
   void initState() {
-    super.initState();
     loadRepos(pageNumber: currentPageNumber.toString());
     _scrollController.addListener(scrollListener);
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     var githubProvider = useProvider(githubState);
     return Container(
+      // Stream builder to listen for items
       child: StreamBuilder<List<Items>>(
         stream: githubProvider.stream,
         builder: (context, snapshot) {
           if (githubProvider.hasError) {
-            return Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error while fetching repos'),
-                  SizedBox(height: 10),
-                  TextButton(
-                      onPressed: () => githubProvider.getMostStarredRepo(
-                          date: date.toString().split(" ").first,
-                          pageNumber: currentPageNumber.toString()),
-                      child: Text('Retry'))
-                ],
-              ),
+            return ErrorStateWidget(
+              date: date.toString().split(" ").first,
+              currentPageNumber: currentPageNumber,
             );
           }
-
+          // checks connection state and show loader as necessary
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasData) {
+            return AppLoader();
+          }
+
+          if (snapshot.hasData) {
             return ListView.separated(
                 controller: _scrollController,
                 itemBuilder: (context, index) {
@@ -112,3 +109,32 @@ class _ReposPageState extends State<ReposPage> with AutomaticKeepAliveClientMixi
   @override
   bool get wantKeepAlive => true;
 }
+
+class ErrorStateWidget extends ConsumerWidget {
+  const ErrorStateWidget({Key key, this.date, this.currentPageNumber}) : super(key: key);
+
+  final String date;
+  final int currentPageNumber;
+
+  @override
+  Widget build(BuildContext context, watch) {
+    var githubProvider = watch(githubState);
+
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Error while fetching repos'),
+          SizedBox(height: 10),
+          TextButton(
+              onPressed: () => githubProvider.getMostStarredRepo(
+                  date: date.toString().split(" ").first,
+                  pageNumber: currentPageNumber.toString()),
+              child: Text('Retry'))
+        ],
+      ),
+    );
+  }
+}
+
