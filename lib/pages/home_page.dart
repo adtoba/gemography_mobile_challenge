@@ -10,28 +10,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   PageController _pageController;
 
-  List<Widget> _pages = <Widget>[
-    ReposPage(),
-    ReposPage()
-  ];
+  List<Widget> _pages = <Widget>[ReposPage(), Container()];
 
   int _activeIndex = 0;
 
   @override
   void initState() {
-    _pageController = PageController(
-        keepPage: true,
-        initialPage: 0
-    );
+    _pageController = PageController(keepPage: true, initialPage: 0);
     super.initState();
   }
 
   void onPageChanged(int index) {
-    _pageController.animateToPage(
-        index, duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+    _pageController.animateToPage(index,
+        duration: Duration(milliseconds: 300), curve: Curves.easeIn);
     setState(() {
       _activeIndex = index;
     });
@@ -43,14 +36,16 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         centerTitle: true,
         elevation: 1,
-        title: Text('Trending Repos'),
+        title: Text(
+          'Trending Repos',
+          style: TextStyle(color: GColors.black),
+        ),
         backgroundColor: GColors.white,
       ),
       body: PageView(
-        controller: _pageController,
-        children: _pages,
-        onPageChanged: onPageChanged
-      ),
+          controller: _pageController,
+          children: _pages,
+          onPageChanged: onPageChanged),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _activeIndex,
         onTap: onPageChanged,
@@ -64,10 +59,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.star),
             label: "Trending",
           ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: "Settings"
-          )
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings")
         ],
       ),
     );

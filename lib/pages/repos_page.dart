@@ -13,53 +13,94 @@ class ReposPage extends StatefulHookWidget {
 }
 
 class _ReposPageState extends State<ReposPage> {
-  Future<GithubApiResponse> _future;
+  final _scrollController = ScrollController();
+
+  int currentPageNumber = 1;
 
   @override
   void initState() {
-    var githubProvider = context.read(githubState);
-    _future = githubProvider.getMostStarredRepo(
-        date: "2017-10-22", sort: "stars", order: "desc");
     super.initState();
+    loadRepos(pageNumber: currentPageNumber.toString());
+    _scrollController.addListener(scrollListener);
   }
 
   @override
   Widget build(BuildContext context) {
+    var githubProvider = useProvider(githubState);
     return Container(
-      child: FutureBuilder<GithubApiResponse>(
-        future: _future,
+      child: StreamBuilder<List<Items>>(
+        stream: githubProvider.stream,
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasData) {
             return ListView.separated(
+                controller: _scrollController,
                 itemBuilder: (context, index) {
+                  if (index == snapshot.data.length) {
+                    if (githubProvider.fetchBusy) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else {
+                      return Container();
+                    }
+                  }
                   return RepoItem(
-                      title: snapshot.data.items[index].name,
-                      author: snapshot.data.items[index].owner.login,
-                      description: snapshot.data.items[index].description,
-                      imageLink: snapshot.data.items[index].owner.avatarUrl,
-                      stars: snapshot.data.items[index].stargazersCount.toString());
+                      title: githubProvider.allItems[index].name,
+                      author: githubProvider.allItems[index].owner.login,
+                      description: githubProvider.allItems[index].description,
+                      imageLink: githubProvider.allItems[index].owner.avatarUrl,
+                      stars: githubProvider.allItems[index].stargazersCount
+                          .toString());
                 },
                 separatorBuilder: (context, index) {
-                  return SizedBox(height: 10);
+                  return Divider();
                 },
-                itemCount: 10);
-          }
-
-          if (snapshot.hasError) {
+                itemCount: githubProvider.allItems.length + 1);
+          } else if (!snapshot.hasData) {
             return Center(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text('Error while fetching repos'),
                   SizedBox(height: 10),
-                  TextButton(onPressed: () => _future, child: Text('Retry'))
+                  TextButton(
+                      onPressed: () => githubProvider.getMostStarredRepo(
+                          date: "2017-10-22",
+                          pageNumber: currentPageNumber.toString()),
+                      child: Text('Retry'))
                 ],
               ),
             );
           }
-
-          return CircularProgressIndicator();
+          return Container();
+          //
         },
       ),
     );
+  }
+
+  void loadRepos({String pageNumber}) {
+    var githubProvider = context.read(githubState);
+    githubProvider.getMostStarredRepo(
+        date: "2017-10-22", pageNumber: pageNumber);
+  }
+
+  void scrollListener() {
+    var githubProvider = context.read(githubState);
+    if (_scrollController.position.maxScrollExtent ==
+        _scrollController.offset) {
+      if (!githubProvider.fetchBusy &&
+          (githubProvider.allItems.length <
+              githubProvider.githubApiResponse.totalCount)) {
+        setState(() {
+          currentPageNumber++;
+        });
+        githubProvider.loadMore(
+            date: "2017-10-22", pageNumber: currentPageNumber.toString());
+      }
+    }
   }
 }

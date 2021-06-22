@@ -7,11 +7,11 @@ class GithubHttpService extends BaseHttpService implements GithubService {
   // Implements the getMostStarredRepo api call
   @override
   Future<GithubApiResponse> getMostStarredRepo(
-      {String date, String sort, String order}) async {
+      {String date, String sort = "stars", String order = "desc", String pageNumber}) async {
     try {
       // response from api endpoint
       final response =
-          await http.get("?q=created:>$date&sort=$sort&order=$order");
+          await http.get("?q=created:>$date&sort=$sort&order=$order&page=$pageNumber");
 
       // transform the data into a GithubApiResponse object
       return GithubApiResponse.fromJson(Map.from(response.data));
@@ -19,6 +19,7 @@ class GithubHttpService extends BaseHttpService implements GithubService {
     } on DioError catch (e) {
       // Throws dio error incase an error occurs
       throw e;
+
     }
   }
 }

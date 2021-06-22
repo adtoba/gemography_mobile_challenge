@@ -20,7 +20,9 @@ class RepoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
@@ -30,7 +32,7 @@ class RepoItem extends StatelessWidget {
             height: 10,
           ),
           Text(
-            description,
+            description ?? "",
             style: GTextStyle.normal.copyWith(fontSize: 18),
           ),
           SizedBox(height: 10),
