@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:gemography_mobile_challenge/main.dart';
 import 'package:gemography_mobile_challenge/models/http/github_api_response.dart';
 import 'package:gemography_mobile_challenge/services/http/github/github_http_service.dart';
 import 'package:gemography_mobile_challenge/services/http/github/github_service.dart';
@@ -34,16 +33,15 @@ class GithubState extends ChangeNotifier {
   Stream<List<Items>> stream;
   List<Items> allItems = [];
 
-  Future<List<Items>> getMostStarredRepo({String date, String pageNumber}) async {
+  Future<void> getMostStarredRepo({String date, String pageNumber}) async {
     _streamController = StreamController<List<Items>>.broadcast();
     stream = _streamController.stream.map((List<Items> data) {
       return data;
     });
-
-    return await loadMore(date: date, pageNumber: pageNumber);
+    await loadMore(date: date, pageNumber: pageNumber);
   }
 
-  Future<List<Items>> loadMore({String date, String pageNumber}) async {
+  Future<void> loadMore({String date, String pageNumber}) async {
     _hasError = false;
     _fetchBusy = true;
     notifyListeners();
@@ -60,7 +58,6 @@ class GithubState extends ChangeNotifier {
     } on DioError catch (e) {
       _hasError = true;
       notifyListeners();
-      print(_hasError);
     } finally {
       _fetchBusy = false;
       notifyListeners();
