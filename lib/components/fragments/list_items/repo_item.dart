@@ -25,15 +25,15 @@ class RepoItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: GTextStyle.bold.copyWith(fontSize: 20),
+            title ?? "",
+            style: GTextStyle.bold.copyWith(fontSize: 16),
           ),
           SizedBox(
             height: 10,
           ),
           Text(
             description ?? "",
-            style: GTextStyle.normal.copyWith(fontSize: 18),
+            style: GTextStyle.normal.copyWith(fontSize: 15),
           ),
           SizedBox(height: 10),
           Row(
@@ -46,11 +46,13 @@ class RepoItem extends StatelessWidget {
               SizedBox(
                 width: 10,
               ),
-              Text(
-                author,
-                style: GTextStyle.bold.copyWith(fontSize: 16),
+              Expanded(
+                child: Text(
+                  author ?? "",
+                  style: GTextStyle.bold.copyWith(fontSize: 14),
+                ),
               ),
-              Spacer(),
+              SizedBox(width: 10,),
               Icon(
                 Icons.star,
                 color: Colors.black,

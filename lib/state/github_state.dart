@@ -23,25 +23,28 @@ class GithubState extends ChangeNotifier {
   }
 
   bool _fetchBusy = false;
+  bool _hasError = false;
 
   GithubApiResponse githubApiResponse;
 
   bool get fetchBusy => _fetchBusy;
+  bool get hasError => _hasError;
 
   StreamController<List<Items>> _streamController;
   Stream<List<Items>> stream;
   List<Items> allItems = [];
 
-  Future<void> getMostStarredRepo(
-      {String date, String pageNumber}) async {
+  Future<List<Items>> getMostStarredRepo({String date, String pageNumber}) async {
     _streamController = StreamController<List<Items>>.broadcast();
     stream = _streamController.stream.map((List<Items> data) {
       return data;
     });
-    await loadMore(date: date, pageNumber: pageNumber);
+
+    return await loadMore(date: date, pageNumber: pageNumber);
   }
 
-  Future<void> loadMore({String date, String pageNumber}) async {
+  Future<List<Items>> loadMore({String date, String pageNumber}) async {
+    _hasError = false;
     _fetchBusy = true;
     notifyListeners();
     try {
@@ -52,11 +55,12 @@ class GithubState extends ChangeNotifier {
         _streamController.add(allItems);
         allItems.addAll(response.items);
         notifyListeners();
-
       }
+      return allItems;
     } on DioError catch (e) {
-      logger.e(e.message);
-      throw e;
+      _hasError = true;
+      notifyListeners();
+      print(_hasError);
     } finally {
       _fetchBusy = false;
       notifyListeners();

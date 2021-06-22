@@ -12,10 +12,12 @@ class ReposPage extends StatefulHookWidget {
   _ReposPageState createState() => _ReposPageState();
 }
 
-class _ReposPageState extends State<ReposPage> {
+class _ReposPageState extends State<ReposPage> with AutomaticKeepAliveClientMixin {
   final _scrollController = ScrollController();
 
   int currentPageNumber = 1;
+
+  DateTime date = DateTime.now().subtract(Duration(days: 30));
 
   @override
   void initState() {
@@ -31,6 +33,24 @@ class _ReposPageState extends State<ReposPage> {
       child: StreamBuilder<List<Items>>(
         stream: githubProvider.stream,
         builder: (context, snapshot) {
+          if (githubProvider.hasError) {
+            return Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error while fetching repos'),
+                  SizedBox(height: 10),
+                  TextButton(
+                      onPressed: () => githubProvider.getMostStarredRepo(
+                          date: date.toString().split(" ").first,
+                          pageNumber: currentPageNumber.toString()),
+                      child: Text('Retry'))
+                ],
+              ),
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
@@ -58,22 +78,6 @@ class _ReposPageState extends State<ReposPage> {
                   return Divider();
                 },
                 itemCount: githubProvider.allItems.length + 1);
-          } else if (!snapshot.hasData) {
-            return Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error while fetching repos'),
-                  SizedBox(height: 10),
-                  TextButton(
-                      onPressed: () => githubProvider.getMostStarredRepo(
-                          date: "2017-10-22",
-                          pageNumber: currentPageNumber.toString()),
-                      child: Text('Retry'))
-                ],
-              ),
-            );
           }
           return Container();
           //
@@ -85,7 +89,7 @@ class _ReposPageState extends State<ReposPage> {
   void loadRepos({String pageNumber}) {
     var githubProvider = context.read(githubState);
     githubProvider.getMostStarredRepo(
-        date: "2017-10-22", pageNumber: pageNumber);
+        date: date.toString().split(" ").first, pageNumber: pageNumber);
   }
 
   void scrollListener() {
@@ -99,8 +103,12 @@ class _ReposPageState extends State<ReposPage> {
           currentPageNumber++;
         });
         githubProvider.loadMore(
-            date: "2017-10-22", pageNumber: currentPageNumber.toString());
+            date: date.toString().split(" ").first,
+            pageNumber: currentPageNumber.toString());
       }
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
